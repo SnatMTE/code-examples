@@ -2,19 +2,21 @@
 //Simpleish forum written by Snat.
 //Do as you wish with it, I was bored.
 
-$host = '';
+// Database host
+// Database name
 $dbname = '';
-$username = '';
+$username = ''; // Database username
+$password = ''; // Database password
 $password = '';
 
 //Below is general config details. 
 
 $site_name = "";
+// Contact email for the site
 $site_email = "";
-
 // Lets include a bunch of different stuff
 
-require("includes/avatar.php");
-require("includes/db.php");
+require_once("includes/avatar.php");
+require_once("includes/db.php");
 
 ?>
