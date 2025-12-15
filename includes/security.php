@@ -6,10 +6,16 @@ if (!defined('APP_INIT')) {
 
 // Secure session settings
 $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+// Avoid setting cookie domain when HTTP_HOST contains a port (e.g., localhost:8000)
+$host = $_SERVER['HTTP_HOST'] ?? '';
+$domain = '';
+if (!empty($host) && strpos($host, ':') === false) {
+    $domain = $host;
+}
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
-    'domain' => $_SERVER['HTTP_HOST'] ?? '',
+    'domain' => $domain,
     'secure' => $secure,
     'httponly' => true,
     'samesite' => 'Lax'

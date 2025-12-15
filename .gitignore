@@ -1,0 +1,10 @@
+# Local configuration and data
+config.local.php
+/install.lock
+/data/
+
+# OS/IDE files
+*.log
+*.cache
+.DS_Store
+.vscode/

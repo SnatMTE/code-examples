@@ -16,6 +16,20 @@ include("template/left.php");
 
 ?>
 <h2><?php echo function_exists('e') ? e($topic['title']) : htmlspecialchars($topic['title'], ENT_QUOTES, 'UTF-8'); ?></h2>
+<?php
+// Show friendly errors from post_reply redirect codes
+if (!empty($_GET['err'])) {
+    $emap = [
+        'csrf' => 'Invalid form submission (CSRF). Please retry.',
+        'empty' => 'Reply cannot be empty.',
+        'db' => 'Database error while saving reply. Try again later.',
+        'unknown' => 'An unknown error occurred while posting your reply.'
+    ];
+    $err = htmlspecialchars($_GET['err'], ENT_QUOTES, 'UTF-8');
+    $msg = $emap[$err] ?? 'An error occurred.';
+    echo '<p style="color:red;">' . e($msg) . '</p>';
+}
+?>
 <p>
     Created by: <?php echo function_exists('e') ? e($topic['username']) : htmlspecialchars($topic['username'], ENT_QUOTES, 'UTF-8'); ?>
 </p>

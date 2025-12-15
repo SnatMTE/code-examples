@@ -10,6 +10,12 @@ try {
             throw new Exception('Invalid CSRF token.');
         }
 
+        // Ensure DB is configured
+        if (!isset($pdo) || !($pdo instanceof PDO)) {
+            error_log('Create topic: PDO not configured or missing.');
+            throw new Exception('Database not configured.');
+        }
+
         $title = trim($_POST['title'] ?? '');
         $body = trim($_POST['body'] ?? '');
 
@@ -17,13 +23,28 @@ try {
             throw new Exception('Title and body are required.');
         }
 
-        $user_id = $_SESSION['user']['id'];
+        $user_id = $_SESSION['user']['id'] ?? null;
+        if (empty($user_id)) {
+            error_log('Create topic: user id missing from session.');
+            header('Location: login.php');
+            exit;
+        }
 
-        $stmt = $pdo->prepare("INSERT INTO topics (title, body, created_at, user_id) VALUES (:title, :body, NOW(), :user_id)");
-        $stmt->bindParam(':title', $title, PDO::PARAM_STR);
-        $stmt->bindParam(':body', $body, PDO::PARAM_STR);
-        $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
-        $stmt->execute();
+        try {
+            $stmt = $pdo->prepare("INSERT INTO topics (title, body, created_at, user_id) VALUES (:title, :body, CURRENT_TIMESTAMP, :user_id)");
+            $stmt->execute([
+                ':title' => $title,
+                ':body' => $body,
+                ':user_id' => $user_id
+            ]);
+        } catch (PDOException $e) {
+            error_log('Create topic DB error: ' . $e->getMessage() . ' (SQLSTATE ' . $e->getCode() . ')');
+            // If table missing or schema issue, include hint
+            if (stripos($e->getMessage(), 'no such table') !== false || stripos($e->getMessage(), 'doesn\'t exist') !== false) {
+                error_log('Create topic: topics table missing or DB schema not initialized.');
+            }
+            throw new Exception('Database error.');
+        }
 
         // Regenerate CSRF token after successful form submission to prevent replay
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
