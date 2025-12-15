@@ -7,16 +7,20 @@
 $dbname = '';
 $username = ''; // Database username
 $password = ''; // Database password
-$password = '';
 
 //Below is general config details. 
 
 $site_name = "";
 // Contact email for the site
 $site_email = "";
-// Lets include a bunch of different stuff
 
-require_once("includes/avatar.php");
-require_once("includes/db.php");
+// Application init marker
+if (!defined('APP_INIT')) define('APP_INIT', true);
+// Include security first
+require_once(__DIR__ . "/includes/security.php");
+
+// Now include other helpers
+require_once(__DIR__ . "/includes/avatar.php");
+require_once(__DIR__ . "/includes/db.php");
 
 ?>

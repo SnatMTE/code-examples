@@ -1,28 +1,36 @@
 <?php
-session_start();
 include 'config.php';
 
-if (isset($_POST['username']) && isset($_POST['password'])) {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+        $error = 'Invalid CSRF token.';
+    } else {
+        $username = sanitize_username($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
 
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
-        $stmt->execute([
-            'username' => $username
-        ]);
-        $user = $stmt->fetch();
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
+            $stmt->execute([
+                'username' => $username
+            ]);
+            $user = $stmt->fetch();
 
-        if ($user && password_verify($password, $user['password'])) {
-            $_SESSION['user'] = $user;
-            $_SESSION['user_id'] = $user['id'];
-            header('Location: index.php');
-            exit;
-        } else {
-            $error = "Incorrect username or password. <a href='forgotten_password.php'>Forgotten password?</a>";
+            if ($user && password_verify($password, $user['password'])) {
+                // Only store minimal data in session
+                $_SESSION['user'] = [
+                    'id' => $user['id'],
+                    'username' => $user['username']
+                ];
+                regenerate_session();
+                header('Location: index.php');
+                exit;
+            } else {
+                $error = "Incorrect username or password. <a href='forgotten_password.php'>Forgotten password?</a>";
+            }
+        } catch (PDOException $e) {
+            error_log('Login error: ' . $e->getMessage());
+            $error = 'Error logging in.';
         }
-    } catch (PDOException $e) {
-        $error = "Error logging in: " . $e->getMessage();
     }
 }
 
@@ -35,12 +43,13 @@ include("template/left.php");
 <h2>Login</h2>
     <hr>
     <?php if (isset($error)) { ?>
-        <p style="color: red;"><?php echo $error; ?></p>
+        <p style="color: red;"><?php echo function_exists('e') ? e($error) : htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
     <?php } ?>
     <form action="" method="post">
+        <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
         <p>
             <label for="username">Username:</label>
-            <input type="text" name="username" id="username">
+            <input type="text" name="username" id="username" value="<?php echo isset($username) ? e($username) : ''; ?>">
         </p>
         <p>
             <label for="password">Password:</label>

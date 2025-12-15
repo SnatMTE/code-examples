@@ -1,5 +1,4 @@
 <?php
-session_start();
 include 'config.php';
 
 $page_name = "Forgot Password";
@@ -8,6 +7,7 @@ include("template/header.php");
 <h2>Forgotten password</h2>
 <hr>
 <form action="forgotten_password.php" method="post">
+    <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
     <p>
         <label for="email">Email address:</label>
         <input type="email" name="email" id="email">
@@ -17,44 +17,55 @@ include("template/header.php");
     </p>
 </form>
 <?php
-if (isset($_POST['submit'])) {
-    $email = $_POST['email'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+        echo '<p style="color:red;">Invalid CSRF token.</p>';
+    } else {
+        $email = trim($_POST['email'] ?? '');
 
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = :email");
-        $stmt->execute([
-            'email' => $email
-        ]);
-        $user = $stmt->fetch();
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE email = :email");
+            $stmt->execute([
+                'email' => $email
+            ]);
+            $user = $stmt->fetch();
 
-        if ($user) {
-            // Generate a new random password
-            $new_password = bin2hex(random_bytes(10));
+            if ($user) {
+                // Generate a reset token
+                $token = bin2hex(random_bytes(32));
+                $expires = date('Y-m-d H:i:s', time() + 3600); // 1 hour
 
-            try {
-                $stmt = $pdo->prepare("UPDATE users SET password = :password WHERE email = :email");
-                $stmt->execute([
-                    'password' => password_hash($new_password, PASSWORD_BCRYPT),
-                    'email' => $email
-                ]);
-            } catch (PDOException $e) {
-                echo "Error updating password: " . $e->getMessage();
-                exit;
+                try {
+                    $stmt = $pdo->prepare("UPDATE users SET reset_token = :token, reset_expires = :expires WHERE email = :email");
+                    $stmt->execute([
+                        'token' => $token,
+                        'expires' => $expires,
+                        'email' => $email
+                    ]);
+                } catch (PDOException $e) {
+                    error_log('Error saving reset token: ' . $e->getMessage());
+                    echo '<p style="color:red;">Error processing request.</p>';
+                    exit;
+                }
+
+                $host = $_SERVER['HTTP_HOST'];
+                $path = rtrim(dirname($_SERVER['PHP_SELF']), '\\/');
+                $link = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . $host . $path . "/reset.php?token=" . urlencode($token);
+
+                $to = $email;
+                $subject = "Password reset request";
+                $message = "To reset your password, visit the following link (valid for 1 hour): " . $link;
+                $headers = 'From: ' . ($site_email ?: 'noreply@' . $host);
+                @mail($to, $subject, $message, $headers);
+
+                echo '<p>A password reset link has been sent to your email address.</p>';
+            } else {
+                echo '<p style="color:red;">No user found with that email address.</p>';
             }
-
-            // Send an email to the user with the new password
-            $to = $email;
-            $subject = "Password reset";
-            $message = "Your new password is: " . $new_password;
-            $headers = $site_email;
-            mail($to, $subject, $message, $headers);
-
-            echo "A new password has been sent to your email address.";
-        } else {
-            echo "No user found with that email address.";
+        } catch (PDOException $e) {
+            error_log('Forgotten password error: ' . $e->getMessage());
+            echo '<p style="color:red;">Error processing request.</p>';
         }
-    } catch (PDOException $e) {
-        echo "Error processing request: " . $e->getMessage();
     }
 }
 include("template/footer.php");

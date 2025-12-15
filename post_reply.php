@@ -1,14 +1,18 @@
 <?php
-session_start();
-include 'config.php';
+require_once 'config.php';
+
+require_login();
 
 try {
 
     if (isset($_POST['submit'])) {
-        $body = $_POST['body'];
-        $topic_id = $_POST['topic_id'];
-        $user_id = $_SESSION['user']['id'];
-        echo $user_id;
+        if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+            throw new Exception('Invalid CSRF token.');
+        }
+
+        $body = trim($_POST['body'] ?? '');
+        $topic_id = (int)($_POST['topic_id'] ?? 0);
+        $user_id = (int)$_SESSION['user']['id'];
 
         $stmt = $pdo->prepare("INSERT INTO replies (body, created_at, user_id, topic_id) VALUES (:body, NOW(), :user_id, :topic_id)");
 
@@ -21,7 +25,10 @@ try {
         exit;
     }
 
-} catch (PDOException $e) {
-    echo "Error: " . $e->getMessage();
+} catch (Exception $e) {
+    error_log('Post reply error: ' . $e->getMessage());
+    // Redirect back with an error (do not expose DB errors)
+    header('Location: view_topic.php?id=' . ($topic_id ?? '0'));
+    exit;
 }
 ?>

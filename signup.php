@@ -1,31 +1,43 @@
 <?php
 include 'config.php';
 
-if (isset($_POST['username']) && isset($_POST['password'])) {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF check
+    if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+        $error = 'Invalid CSRF token.';
+    } else {
+        $username = sanitize_username($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
 
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
-        $stmt->execute([
-            'username' => $username
-        ]);
-        $existingUser = $stmt->fetch();
-
-        if ($existingUser) {
-            $error = "Username already exists.";
+        if (strlen($username) < 3 || strlen($username) > 30) {
+            $error = 'Username must be 3-30 characters.';
+        } elseif (strlen($password) < 8) {
+            $error = 'Password must be at least 8 characters.';
         } else {
-            $stmt = $pdo->prepare("INSERT INTO users (username, password) VALUES (:username, :password)");
-            $stmt->execute([
-                'username' => $username,
-                'password' => password_hash($password, PASSWORD_DEFAULT)
-            ]);
+            try {
+                $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
+                $stmt->execute([
+                    'username' => $username
+                ]);
+                $existingUser = $stmt->fetch();
 
-            header('Location: login.php');
-            exit;
+                if ($existingUser) {
+                    $error = "Username already exists.";
+                } else {
+                    $stmt = $pdo->prepare("INSERT INTO users (username, password) VALUES (:username, :password)");
+                    $stmt->execute([
+                        'username' => $username,
+                        'password' => password_hash($password, PASSWORD_DEFAULT)
+                    ]);
+
+                    header('Location: login.php');
+                    exit;
+                }
+            } catch (PDOException $e) {
+                error_log('Signup error: ' . $e->getMessage());
+                $error = 'Error signing up.';
+            }
         }
-    } catch (PDOException $e) {
-        $error = "Error signing up: " . $e->getMessage();
     }
 }
 
@@ -38,12 +50,13 @@ include("template/left.php");
     <h1>Sign Up</h1>
     <hr>
     <?php if (isset($error)) { ?>
-        <p style="color: red;"><?php echo $error; ?></p>
+        <p style="color: red;"><?php echo function_exists('e') ? e($error) : htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
     <?php } ?>
     <form action="" method="post">
+        <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
         <p>
             <label for="username">Username:</label>
-            <input type="text" name="username" id="username">
+            <input type="text" name="username" id="username" value="<?php echo isset($username) ? e($username) : ''; ?>">
         </p>
         <p>
             <label for="password">Password:</label>

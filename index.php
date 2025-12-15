@@ -1,6 +1,5 @@
 <?php
 require_once('config.php');
-session_start();
 
 //Future change - functions!
 $topics = fetchData("SELECT * FROM topics ORDER BY created_at DESC", $pdo);
@@ -17,7 +16,7 @@ include("template/left.php");
 
         <?php foreach($topics as $topic) { ?>
           <section class="index">
-          <div class="index_body"><a href="view_topic.php?id=<?php echo $topic['id']; ?>"><?php echo $topic['title']; ?></a></div>          
+          <div class="index_body"><a href="view_topic.php?id=<?php echo e($topic['id']); ?>"><?php echo e($topic['title']); ?></a></div>          
 
             <?php 
             $user_id = $topic['user_id'];
@@ -27,7 +26,7 @@ include("template/left.php");
             ]);
             $user = $user_stmt->fetch();
             echo "<div class=\"index_sidebar\">";
-            echo $user['username'];
+            echo e($user['username']);
             $email = $user['email'];
             echo "</div>"; 
 
@@ -35,7 +34,7 @@ include("template/left.php");
 
             ?>
  
-           <div class="grow1"><?php echo date("F jS, Y", strtotime($topic['created_at'])); ?></div>
+           <div class="grow1"><?php echo e(date("F jS, Y", strtotime($topic['created_at']))); ?></div>
            
           </section>
           <hr />
