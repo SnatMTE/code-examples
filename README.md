@@ -38,14 +38,6 @@ Example:
 
 ---
 
-## Projects That Became Standalone Repositories
-
-Some tutorials grow into full projects. If that happens, it will be noted in the `final/README.md` of the article folder. For example:
-
-- [Building a Login System → Full Project](https://github.com/SnatMTE/full-login-system)
-
----
-
 ## Releases
 
 Official releases can be found on the [Releases page](https://github.com/SnatMTE/code-examples/releases). Each release corresponds to a stable snapshot of the repository.
