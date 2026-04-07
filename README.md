@@ -1,8 +1,61 @@
-# Snat's Simple Forum
-Honestly there is no real purpose to this forum. I was bored one night dog sitting and decided "hey, I never actually made a forum before". I set out to make a basic forum just so I could say I did. This has no formatting, no template system or anything like that - it is PURELY to show how a forum works. There is no moderation features, no admin feature it just allows someone to sign up and post/reply to a topic. No forgotten password, no storing emails etc - just simple user and password.
+# Code Examples
 
-I can't stress enough this was purely a practice excercise for me while half asleep. There is no installer but I have provided an SQL file that will make the tables for you via whatever method you want to insert the queries. Do NOT use on a production server, there are security issues. This was written a tutorial on the logic of making a forum.
+This repository contains all the code used for my articles and tutorials. It is organised by year and article, making it easy to follow along.
 
-The reason I am releasing it is in case someone wants to integrate a basic forum into their own code with their code handling login information etc or just to see how a basic forum actually works. 
+---
 
-No real support for this or new features.
+## Repository Structure
+
+The general structure is:
+
+code-examples/
+  YEAR/
+    ARTICLE-TITLE/
+      step-01/
+      step-02/
+      step-03/
+      final/
+  shared/
+  archive/
+
+- YEAR – The year the article was published  
+- ARTICLE-TITLE – Matches the article slug for easy reference  
+- step-XX/ – Step-by-step folders showing how the code evolves  
+- final/ – The finished version of the tutorial code  
+- shared/ – Reusable code, libraries, or helper scripts  
+- archive/ – Old tutorials or retired experiments
+
+---
+
+## Using This Repository
+
+1. Navigate to the folder for the article you are following  
+2. Open the step you want to see or run  
+3. For the complete working version, check the `final/` folder
+
+Example:  
+`2026/building-a-login-system/final/`
+
+---
+
+## Projects That Became Standalone Repositories
+
+Some tutorials grow into full projects. If that happens, it will be noted in the `final/README.md` of the article folder. For example:
+
+- [Building a Login System → Full Project](https://github.com/SnatMTE/full-login-system)
+
+---
+
+## Releases
+
+Official releases can be found on the [Releases page](https://github.com/SnatMTE/code-examples/releases). Each release corresponds to a stable snapshot of the repository.
+
+---
+
+## Contributing / Feedback
+
+If you find issues, have suggestions, or want to show your version of a tutorial, feel free to open an issue or create a pull request.
+
+---
+
+*Created and maintained by SnatMTE. Code is intended for learning and experimentation. Visit [Tales of Snat](https://snat.co.uk/).*
